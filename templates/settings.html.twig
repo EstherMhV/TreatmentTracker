@@ -1,0 +1,519 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}PLADAPATH - Paramètres{% endblock %}
+
+{% block body %}
+
+{% block javascripts %}
+    {# {{ encore_entry_script_tags('app') }} #}
+    <script src="{{ asset('js/setting.js') }}"></script>
+    <script src="{{ asset('js/jquery-3.6.0.min.js') }}"></script> 
+    <script src="{{ asset('js/popper.min.js') }}"></script>
+    <script src="{{ asset('js/tippy-bundle.umd.js') }}"></script>
+{% endblock %}
+
+{% for flashError in app.flashes('error') %}
+    <div id="errorFlash" class="alert alert-danger mx-auto" style="width: 50%;">
+        {{ flashError }}
+    </div>
+    <script>
+        setTimeout(function() {
+            document.getElementById('errorFlash').style.display = 'none';
+        }, 2000); // (2 secondes)
+    </script>
+{% endfor %}
+
+{% for flashSuccess in app.flashes('success') %}
+    <div id="successFlash" class="alert alert-success mx-auto" style="width: 50%;">
+        {{ flashSuccess }}
+    </div>
+    <script>
+        setTimeout(function() {
+            document.getElementById('successFlash').style.display = 'none';
+        }, 1000); // (1 secondes)
+    </script>
+{% endfor %}
+
+
+<body>
+    <!-- BOUTTONS DE NAVIGATIONS DES PARAMETRES -->
+    <div class="container mt-5">
+        <div class="buttons d-flex justify-content-center nav mb-3">
+            <button data-id="mycaisse" class="button active">CAISSE</button>
+            <button data-id="mypooldevm" class="button active">POOL DE VM</button>
+            <button data-id="myvm" class="button active">VM</button>
+            <button data-id="myscenario" class="button active">SCENARIO</button>
+            <button data-id="myprocess" class="button active">PROCESS</button>
+            <button data-id="mytraitment" class="button active">TRAITEMENT</button>
+            <button data-id="mymessage" class="button active">MESSAGE</button>
+        </div>
+    </div>
+
+    <!-- CAISSE -->
+    <div class="container content-panel pb-5" id="mycaisse">
+        <div class="row justify-content-center">
+            {% set totalCost = listAllCaisseExploit|length %}
+            <h4>Nombre de caisses exploitantes : {{ totalCost }}</h4>
+            <div class="scroll-setting">
+                <table class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">Numéro de la caisse</th>
+                            <th scope="col">Nom de la caisse</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set sortedCaisseList = listAllCaisseExploit|sort((a, b) => a.numcaisse <=> b.numcaisse) %}
+                        {% for caisse in sortedCaisseList %}
+                        <tr>
+                            <td>
+                                {{ caisse.numcaisse }}
+                            </td>
+                            <td>
+                                {{ caisse.nomcaisse }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% set totalCost = listAllCaisse|length %}
+            <input type="text" id="caisseSearch" placeholder="Rechercher par nom ou numéro de caisse">
+            <h4>Nombre de caisses : {{ totalCost }}</h4>
+            <div class="scroll-setting">
+                <table id="caisseTable" class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">Numéro de la caisse</th>
+                            <th scope="col">Nom de la caisse</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set sortedCaisseList = listAllCaisse|sort((a, b) => a.numcaisse <=> b.numcaisse) %}
+                        {% for caisse in sortedCaisseList %}
+                        <tr>
+                            <td>
+                                {{ caisse.numcaisse }}
+                            </td>
+                            <td>
+                                {{ caisse.nomcaisse }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- POOL DE VM -->
+    <div class="container content-panel" id="mypooldevm">
+        <div class="row justify-content-center">
+            {% set totalCost = listAllPoolVM|length %}
+            <input type="text" id="poolSearch" placeholder="Rechercher par nom de pool">
+            <h4>Nombre de pools : {{ totalCost }}</h4>
+            <div class="scroll-setting">
+                <table id="poolVMTable" class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">Num Caisse</th>
+                            <th scope="col">Nom Caisse</th>
+                            <th scope="col">Nom Pool</th>
+                            <th scope="col">Liste des VM</th>
+                            <th scope="col">Modifier</th>
+                            <th scope="col">Supprimer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set sortedPoolList = listAllPoolVM|sort((a, b) => a.nompool <=> b.nompool) %}
+                        {% for poolvm in sortedPoolList %}
+                        <tr>
+                            <td>
+                                {% for caisse in listAllCaisseExploit %}
+                                {% if caisse.id == poolvm.idcaisseexploit.id %}
+                                    {{ caisse.numcaisse }}
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for caisse in listAllCaisseExploit %}
+                                {% if caisse.id == poolvm.idcaisseexploit.id %}
+                                    {{ caisse.nomcaisse }}
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>{{ poolvm.nompool }}</td>
+                            <td>
+                                {% for vm in listAllVM %}
+                                {% if vm.poolvm.id == poolvm.id %}
+                                <option>{{ vm.nomvm }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <a href="{{ path('poolvm_edit', {'id': poolvm.id}) }}" style="color: white;">
+                                    <button class="button mx-1 active">
+                                        Modifier
+                                    </button>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ path('poolvm_delete', {'id': poolvm.id}) }}" data-id="{{ poolvm.id }}" class="delete-link" style="color: white;">
+                                    <button class="button mx-1 active">
+                                        Supprimer
+                                    </button>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="action-buttons mt-3 mb-3 d-flex justify-content-center">
+                <a href="{{ path('poolvm_create') }}" style="color: white;">
+                    <button class="button active">
+                        Ajouter
+                    </button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- MY VM -->
+    <div class="container content-panel" id="myvm">
+        <div class="row justify-content-center">
+        {% set totalCost = listAllVM|length %}
+        <input type="text" id="vmSearch" placeholder="Rechercher par nom ou numéro de vm">
+        <h4>Nombre de vms : {{ totalCost }}</h4>
+            <div class="scroll-setting">
+                <table id="vmTable" class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">Nom VM</th>
+                            <th scope="col">Pool Vm</th>
+                            <th scope="col">Traitement associé</th>
+                            <th scope="col">Modifier</th>
+                            <th scope="col">Supprimer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set sortedVMList = listAllVM|sort((a, b) => a.nomvm <=> b.nomvm) %}
+                        {% for vm in listAllVM %}
+                        <tr>
+                            <td>{{ vm.nomvm }}</td>
+                            <td>
+                                {% for PoolVm in listAllPoolVM %}
+                                {% if vm.PoolVm.id == PoolVm.id %}
+                                {{ vm.PoolVm.nompool }}
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>{% for vm in vm.getIdTraitement() %}
+                                {{ vm.id }}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <a href="{{ path('vm_edit', {'id': vm.id}) }}" style="color: white;">
+                                    <button class="button mx-1 active">
+                                        Modifier
+                                    </button>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ path('vm_delete', {'id': vm.id}) }}" data-id="{{ vm.id }}" class="delete-link" style="color: white;">
+                                    <button class="button mx-1 active">
+                                        Supprimer
+                                    </button>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="action-buttons mt-3 mb-3 d-flex justify-content-center">
+            <a href="{{ path('vm_create') }}" style="color: white;">
+                <button class="button mx-1 active">
+                    Ajouter
+                </button>
+            </a>
+        </div>
+    </div>
+
+    <!-- SCENARIO -->
+    <div class="container content-panel" id="myscenario">
+        <div class="row justify-content-center">
+        {% set totalCost = listAllScenario|length %}
+        <input type="text" id="scenarioSearch" placeholder="Rechercher par nom de scenario">
+        <h4>Nombre de scenarios : {{ totalCost }}</h4>
+            <div class="scroll-setting">
+                <table id="scenarioTable" class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">Nom Scenario</th>
+                            <th scope="col">Étape 2 (en jours)</th>
+                            <th scope="col">Étape 3  (en jours)</th>
+                            <th scope="col">Étape 4  (en jours)</th>
+                            <th scope="col">Modifier</th>
+                            <th scope="col">Supprimer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set sortedScenarioList = listAllScenario|sort((a, b) => a.nomscenario <=> b.nomscenario) %}
+                        {% for scenario in sortedScenarioList %}
+                        <tr>
+                            <td>{{ scenario.nomscenario }}</td>
+                            <td>{{ scenario.delai1 }}</td>
+                            <td>{{ scenario.delai2 }}</td>
+                            <td>{{ scenario.delai3 }}</td>
+                            <td>
+                                <a href="{{ path('scenario_edit', {'id': scenario.id}) }}" style="color: white;">
+                                    <button class="button mx-1 active">
+                                        Modifier
+                                    </button>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ path('scenario_delete', {'id': scenario.id}) }}" data-id="{{ scenario.id }}" class="delete-link" style="color: white;">
+                                    <button class="button mx-1 active">
+                                        Supprimer
+                                    </button>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="action-buttons mt-3 mb-3 d-flex justify-content-center">
+                <a href="{{ path('scenario_create') }}" style="color: white;">
+                    <button class="button mx-1 active">
+                        Ajouter
+                    </button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROCESS -->
+    <div class="container content-panel" id="myprocess">
+        <div class="row justify-content-center">
+        {% set totalCost = listAllProcess|length %}
+        <input type="text" id="processSearch" placeholder="Rechercher par nom de process">
+        <h4>Nombre de process : {{ totalCost }}</h4>
+            <div class="scroll-setting">
+                <table id="processTable" class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">Process</th>
+                            <th scope="col">Temps/min/dossier</th>
+                            <th scope="col">Limite VM</th>
+                            <th scope="col">Scenario</th>
+                            <th scope="col">Modifier</th>
+                            <th scope="col">Supprimer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set sortedProcessList = listAllProcess|sort((a, b) => a.nomprocess <=> b.nomprocess) %}
+                        {% for process in sortedProcessList %}
+                        <tr>
+                            <td>{{ process.nomprocess }}</td>
+                            <td>{{ process.tempsminutedossier }}</td>
+                            <td>{{ process.vmmax}}</td>
+                            <td>
+                                {% for scenario in listAllScenario %}
+                                {% if process.idscenario.id == scenario.id %}
+                                {{ scenario.nomscenario }}
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <a href="{{ path('process_edit', {'id': process.id}) }}" style="color: white;">
+                                    <button class="button mx-1 active">
+                                        Modifier
+                                    </button>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ path('process_delete', {'id': process.id}) }}" data-id="{{ process.id }}" class="delete-link" style="color: white;">
+                                    <button class="button mx-1 active">
+                                        Supprimer
+                                    </button>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="action-buttons mt-3 mb-3 d-flex justify-content-center">
+                <a href="{{ path('process_create') }}" style="color: white;">
+                    <button class="button mx-1 active">
+                        Ajouter
+                </button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRAITEMENT -->
+    <div class="container content-panel" id="mytraitment" style="max-width:90%;">
+        <div class="row justify-content-center">
+        {% set totalCost = ListAllTraitment|length %}
+        <input type="text" id="traitementSearch" placeholder="Rechercher un traitement">
+        <h4>Nombre de traitements : {{ totalCost }}</h4>
+            <div class="scroll-setting"> 
+                <table id="traitementTable" class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">Traitement n°</th>
+                            <th scope="col">Ajouté le</th>
+                            <th scope="col">Date de début</th>
+                            <th scope="col">Date de fin</th>
+                            <th scope="col">Caisse exploitante</th>
+                            <th scope="col">Caisse de traitement</th>
+                            <th scope="col">Pool</th>
+                            <th scope="col">Vm</th>
+                            <th scope="col">Scenario</th>
+                            <th scope="col">Process</th>
+                            <th scope="col">Étape</th>
+                            <th scope="col">Nbre de dossiers</th>
+                            <th scope="col">Commentaire d'erreur</th>
+                            <th scope="col">Commentaire de clôture</th>
+                            <th scope="col">État</th>
+                            <th scope="col">Auteur</th>
+                            <th scope="col">Supprimer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for traitement in ListAllTraitment %}
+                        <tr>
+                            <td>{{ traitement.id }}</td>
+                            <td>{{ traitement.datecreation|date('d/m/Y à H:i:s') }}</td>
+                            <td>{{ traitement.datedebut|date('d/m/Y à H:i:s') }}</td>
+                            <td>{{ traitement.datefin|date('d/m/Y à H:i:s') }}</td>
+                            <td>
+                                {% for caisse in listAllCaisseExploit %}
+                                {% if traitement.idcaisseexploit.id == caisse.id %}
+                                    {{ caisse.nomcaisse }} {{ caisse.numcaisse }}
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for caisse in listAllCaisse %}
+                                {% if traitement.idcaisse.id == caisse.id %}
+                                    {{ caisse.nomcaisse }} {{ caisse.numcaisse }}
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for poolvm in listAllPoolVM %}
+                                {% if traitement.idpool.id == poolvm.id %}
+                                    {{ poolvm.nompool }}
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for vm in traitement.idvm %}
+                                {{ vm.nomvm }}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for scenario in listAllScenario %}
+                                {% if traitement.idscenario.id == scenario.id %}
+                                    {{ scenario.nomscenario }}
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for process in traitement.idprocess %}
+                                    {{ process.nomprocess }}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% if traitement.etape is defined %}
+                                    {{ traitement.etape }}
+                                {% else %}
+                                {% endif %}
+                            </td>
+                            <td>{{ traitement.nbredossier }}</td>
+                            <td>{{ traitement.errorcomment }}</td>
+                            <td>{{ traitement.cloturecomment }}</td>
+                            <td>{{ traitement.etat }}</td>
+                            <td>{{ traitement.auteur }}</td>
+                            <td>
+                                <a href="{{ path('traitment_delete', {'id': traitement.id}) }}" data-id="{{ traitement.id }}" class="delete-link" style="color: white;">
+                                    <button class="button mx-1 active">
+                                        Supprimer
+                                    </button>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MESSAGE -->
+    <div class="container content-panel" id="mymessage">
+        <div class="row justify-content-center">
+        {% set totalCost = ListAllMessage|length %}
+        <input type="text" id="messageSearch" placeholder="Rechercher un message">
+        <h4>Nombre de messages : {{ totalCost }}</h4>
+            <div class="scroll-setting">
+                <table id="messageTable" class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">Date de création</th>
+                            <th scope="col">Contenu</th>
+                            <th scope="col">Priorité</th>
+                            <th scope="col">Auteur</th>
+                            <th scope="col">Modifier</th>
+                            <th scope="col">Supprimer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for message in ListAllMessage %}
+                        <tr>
+                            <td>{{ message.date|date('d/m/Y à H:i:s') }}</td>
+                            <td>{{ message.contenu }}</td>
+                            <td>{{ message.priorite }}</td>
+                            <td>{{ message.auteur }}</td>
+                            <td>
+                                <a href="{{ path('message_edit', {'id': message.id}) }}" style="color: white;">
+                                    <button class="button mx-1 active">
+                                        Modifier
+                                    </button>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ path('message_delete', {'id': message.id}) }}" data-id="{{ message.id }}" class="delete-link" style="color: white;">
+                                    <button class="button mx-1 active">
+                                        Supprimer
+                                    </button>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="action-buttons mt-3 mb-3 d-flex justify-content-center">
+                <a href="{{ path('message_create') }}" style="color: white;">
+                    <button class="button mx-1 active">
+                        Ajouter
+                    </button>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+{% endblock %}

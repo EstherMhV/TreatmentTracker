@@ -1,1 +1,1 @@
-# TreatmentTracker
+faire un composer install après le téléchargement du skeleton pour ajouter le dossier vendor

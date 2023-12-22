@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer une VM{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <section class="row justify-content-center">
+            <div class="col-md-6 text-center mt-4">
+
+                <h2>Créer une VM</h2>
+                
+                {{ form_start(form, {'attr': {'class': 'd-inline-block mt-4 col-form-label'}}) }}
+                {{ form_widget(form) }}
+                <button type="submit" class="button" onclick="return confirmCreate();">Créer</button>
+                {{ form_end(form) }}
+            </div>
+        </section>
+    </div>
+
+    
+    <div class="modal fade" id="duplicateVmModal" tabindex="-1" aria-labelledby="duplicateVmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="duplicateVmModalLabel">Error</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Cette VM existe déja.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if app.flashes('vm_duplicate') %}
+        <script>
+            document.addEventListener("DOMContentLoaded", function(event) {
+                var duplicateProcessModal = new bootstrap.Modal(document.getElementById('duplicateVmModal'));
+                duplicateProcessModal.show();
+            });
+        </script>
+    {% endif %}  
+
+
+
+    <script>
+        function confirmCreate() {
+            return confirm("Êtes-vous sûr de vouloir créer cette vm ?");
+        }
+    </script>
+{% endblock %}
