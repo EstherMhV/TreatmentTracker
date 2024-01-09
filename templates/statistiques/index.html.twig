@@ -1,0 +1,133 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}PLADAPATH - Statistiques{% endblock %}
+
+{% block body %}
+    {% block javascripts %}
+        <script src="{{ asset('js/jquery-3.6.0.min.js') }}"></script>
+        <script src="{{ asset('js/graphs.js') }}"></script>
+        <script src="{{ asset('js/graphs2.js') }}"></script>
+        <script src="{{ asset('js/chart.js') }}"></script>
+        <script>
+            $(document).ready(function() {
+                // Initially hide all panels
+                $(".content-panel").hide();
+                $("#v1.1").show(); // You can decide which one you want to show by default
+
+                // When a button in the nav is clicked
+                $(".buttons .button").click(function() {
+                    var panelID = $(this).data("id");
+
+                    // Hide all panels
+                    $(".content-panel").hide();
+
+                    // Show the selected panel
+                    $("#" + panelID).show();
+                });
+            });
+
+            const listAllPoolVM = {{ listAllPoolVM|json_encode|raw }};
+            console.log ('allPoolVM : ',listAllPoolVM )
+     
+        </script>
+    {% endblock %}
+
+        <!-- BOUTTONS DE NAVIGATIONS DES VERSIONS -->
+    <div class="container mt-5">
+        <div class="buttons d-flex justify-content-center nav mb-3">
+            <button data-id="1" class="button active">VM / CAISSE</button>
+            <button data-id="2" class="button active">% D'UILISATION / VM</button>
+            <button data-id="3" class="button active">% D'UILISATION / VM / CAISSE</button>
+            <button data-id="4" class="button active">PROCESS / CAISSE</button>
+            <button data-id="5" class="button active"> GRAPHIQUES</button>
+        </div>
+    </div>
+
+    <div class="container content-panel" id="1">
+        <div class="row justify-content-center">
+            <div class="scroll-setting">
+                {% for caisseId, vmCount in vmCountByCaisse %}
+                    <p>Nombre de VMs utilisées par la caisse {{ caisseId }} : {{ vmCount }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container content-panel" id="2">
+        <div class="row justify-content-center">
+            <div class="scroll-setting">
+                {% for vmName, percentages in utilizationPercentageByVM %}
+                    <p>VM {{ vmName }} : </p>
+                    <ul>
+                        <li>% d'utilisation par jour : {{ percentages.day }}%</li>
+                        <li>% d'utilisation par semaine : {{ percentages.week }}%</li>
+                        <li>% d'utilisation par mois : {{ percentages.month }}%</li>
+                    </ul>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container content-panel" id="3">
+        <div class="row justify-content-center">
+            <div class="scroll-setting">
+                {% for vmName, caissePercentages in utilizationPercentageByVMAndCaisse %}
+                    <p>VM {{ vmName }} : </p>
+                    <ul>
+                        {% for caisseName, percentages in caissePercentages %}
+                            <li>Pourcentage d'utilisation par jour pour {{ caisseName }} : {{ percentages.day }}%</li>
+                            <li>Pourcentage d'utilisation par semaine pour {{ caisseName }} : {{ percentages.week }}%</li>
+                            <li>Pourcentage d'utilisation par mois pour {{ caisseName }} : {{ percentages.month }}%</li>
+                        {% endfor %}
+                    </ul>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container content-panel" id="4">
+        <div class="row justify-content-center">
+            <div class="scroll-setting">
+                {% for caisseId, processCount in processCountByCaisse %}
+                    <p>Nombre de PROCESSs utilisées par la caisse {{ caisseId }} : {{ processCount }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container content-panel" id="5">
+        <div>
+            <label for="yearInput">Year:</label>
+            <input type="number" id="yearInput" placeholder="Enter Year">
+            <button onclick="updateStatistics()">Update Statistics</button>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <canvas id="dossierChart1" width="400" height="300"></canvas>
+            </div>
+            <div class="col-md-6">
+                <label for="poolFilter">PoolVM:</label>
+                <input type="text" id="poolFilter" name="poolFilter" list="poolSuggestions" placeholder="Pool">
+                <datalist id="poolSuggestions">
+                    {% set sortedPoolList = listAllPoolVM|sort((a, b) => a.nompool <=> b.nompool) %}
+                    {% for poolVm in sortedPoolList %}
+                        <option >{{ poolVm.id }}-{{ poolVm.nompool }}</option>
+                    {% endfor %}
+                </datalist>
+                <div id="noPoolFoundMessage" style="display: none; color: #fff;">Aucune caisse trouvée</div>
+                <button onclick="updateStatistics2()">Mettre à jour le graphique</button>
+                <canvas id="dossierChart2" width="400" height="300"></canvas>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <canvas id="dossierChart3" width="400" height="300"></canvas>
+            </div>
+            <div class="col-md-6">
+                <canvas id="dossierChart4" width="400" height="300"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}

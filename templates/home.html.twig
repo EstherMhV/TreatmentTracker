@@ -1,0 +1,529 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}PLADAPATH - Accueil{% endblock %}
+
+{% block body %}
+
+{% block javascripts %}
+    {# {{ encore_entry_script_tags('app') }} #}
+    <script src="{{ asset('js/chart.js') }}"></script>
+    <script src="{{ asset('js/home.js') }}"></script>
+    <script src="{{ asset('js/calendar/dist/index.global.js') }}"></script>
+    <script src="{{ asset('js/calendar/packages/core/locales/fr.global.min.js') }}"></script>
+    <script src="{{ asset('js/central_calendar.js') }}"></script>
+    <script src="{{ asset('js/jquery-3.6.0.min.js') }}"></script>
+    <script src="{{ asset('js/popper.min.js') }}"></script>
+    <script src="{{ asset('js/tippy-bundle.umd.js') }}"></script>
+    <script src="{{ asset('js/fileSaver.js') }}"></script>
+    <script src="{{ asset('js/traitement.js') }}"></script>
+    <script src="{{ asset('js/traitement_edit.js') }}"></script>
+{% endblock %}
+
+<style>
+    .popup-error {
+        display: block;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 15px;
+        border: 1px solid #ccc;
+        background-color: #D14747;
+        color: #fff;
+        z-index: 1000;
+        width: 50%;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 0px 0px 10px 0px #D14747;
+        border-radius: 10px;
+    }
+
+    .popup-success {
+        display: block;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 15px;
+        border: 1px solid #ccc;
+        background-color: #0c419a;
+        color: #fff;
+        z-index: 1000;
+        width: 50%;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 0px 0px 10px 0px #0c419a;
+        border-radius: 10px;
+    }
+
+    body.dark-mode .popup-success {
+        display: block;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 15px;
+        border: 1px solid #ccc;
+        background-color: #3e3e42;
+        color: #fff;
+        z-index: 1000;
+        width: 50%;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 0px 0px 10px 0px #B5B5B5;
+        border-radius: 10px;
+    }
+</style>
+
+{% for flashError in app.flashes('error') %}
+    <div id="errorFlash" class="popup-error" style="width: 50%;">
+        {{ flashError }}
+    </div>
+    <script>
+        setTimeout(function() {
+            document.getElementById('errorFlash').style.display = 'none';
+        }, 3000); // (2 secondes)
+    </script>
+{% endfor %}
+
+{% for flashSuccess in app.flashes('success') %}
+    <div id="successFlash" class="popup-success" style="width: 50%;">
+        {{ flashSuccess }}
+    </div>
+    <script>
+        setTimeout(function() {
+            document.getElementById('successFlash').style.display = 'none';
+        }, 1000); // (2 secondes)
+    </script>
+{% endfor %}
+
+
+    <div class="container-fluid">
+        <div class="row justify-content-around" id="big_size">
+            {% if listAllMessage is defined and listAllMessage|length > 0 %}
+                <div class="overlay" id="popup">
+                    <div class="popup-content">
+                        <div class="popup-header mb-3">
+                            <div class="h1 mb-3">Annonces générales</div>
+                            <div class="popup-button" id="urgentButton">Urgent</div>
+                            <div class="popup-button" id="importantButton">Important</div>
+                            <div class="popup-button" id="normalButton">Normal</div>
+                        </div>
+                        <div class="popup-messages">
+                            <ul id="message-list">
+                                {% for message in listAllMessage %}
+                                    {% if message.priorite == "urgent" %}
+                                        <li class="h6" data-priority="urgent">De {{ message.auteur }}, le {{ message.date|date('d/m/Y à H:i:s') }}</li>
+                                        <li class="h4 mb-3" data-priority="urgent">{{ message.contenu }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% for message in listAllMessage %}
+                                    {% if message.priorite == "important" %}
+                                        <li class="h6" data-priority="important">De {{ message.auteur }}, le {{ message.date|date('d/m/Y à H:i:s') }}</li>
+                                        <li class="h4 mb-3" data-priority="important">{{ message.contenu }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% for message in listAllMessage %}
+                                    {% if message.priorite == "normal" %}
+                                        <li class="h6" data-priority="normal">De {{ message.auteur }}, le {{ message.date|date('d/m/Y à H:i:s') }}</li>
+                                        <li class="h4 mb-3" data-priority="normal">{{ message.contenu }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <span id="close-button" class="close">&times;</span>
+                    </div>
+                </div>
+            {% endif %}
+
+
+            <div class="col-9 rounded">
+                <div class="calendar-container">
+                <div id="calendar"></div>
+                </div>
+            </div>
+
+            <div class="col-3 rounded px-5" id="options">
+
+                <div class="col-md-12 rounded py-1" id="modalFiltre">
+                    <legend>Options de filtres</legend>
+                    <input type="text" id="rechercheTraitement" placeholder="Rechercher un traitement"><br><br>
+                    <button class="popup-button" id="scenarioBtn">Scenario</button>
+                    <button class="popup-button" id="caisseBtn">Caisse</button>
+                    <button class="popup-button" id="poolBtn">Pool</button>
+                    <fieldset>
+                        <div class="scrollFiltre">
+                            <ul id="scenarioCheckboxes"></ul>
+                            <ul id="caisseExploitCheckboxes"></ul>
+                            <ul id="poolVmCheckboxes"></ul>
+                        <div>
+                    </fieldset>
+                </div>
+
+                <div class="col-md-12 rounded mt-3 py-1" id="modalFiltreCaisse">
+                    <fieldset>
+                        <legend>Liste des caisses</legend>
+                        <input type="text" id="recherche" placeholder="Rechercher une caisse">
+                        <div class="scrollCaisse" id="caisseScrollContainer">
+                            {% set sortedCaisseList = listAllCaisse|sort((a, b) => a.numcaisse <=> b.numcaisse) %}
+                            {% for caisse in sortedCaisseList %}
+                                <option class="caisse-option"><a href="{{ path('info_caisse', {'id': caisse.id}) }}" style="color: #fff;">{{ caisse.nomcaisse }} {{ caisse.numcaisse }}</a></option>
+                            {% endfor %}
+                            <div id="noCaisseFoundMessage" style="display: none; color: #fff;">Aucune caisse trouvée</div>
+                        </div>
+                    </fieldset>
+                    <img id="arrow" src="{{ asset('img/arrow.png') }}" alt="Flèche du bas" style="cursor: pointer;"></img>
+                </div>
+
+                <div class="col-md-12 mt-3 rounded" id="modalChart">
+                    <img id="statistiques" src="{{ asset('img/diagramme.png') }}" width='20' height='20' title="Statistiques">
+                    <button id="prevPageButton" title="Process précédent" style="display:none"></button> 
+                    <button id="nextPageButton" title="Process suivant"></button>
+                    <p id="messageParagraph"></p>
+                    <canvas id="processUtilizationChart"></canvas>
+                    <canvas id="vmUtilizationChart" style="display:none"></canvas>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <div id="myModal" class="modal draggable">
+        <div class="modal-content">
+            <span id="closeCreate" class="close">&times;</span>
+            <h2>Ajouter un traitement</h2>
+            
+            <form action="{{ path('traitment_create') }}" method="post" id="traitment-form">
+                <div class="form-group">
+                <label>Caisse de traitement :</label>
+                    <select id="caisse" name="caisse">
+                        <option value="Tous" selected>Choisir une caisse</option>
+                            {% for caisse in listAllCaisse %}
+                                <option value="{{ caisse.id }}">{{ caisse.nomcaisse }} {{ caisse.numcaisse }}</option>
+                            {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Caisse exploitante :</label>
+                    <select id="caisse_exploit" name="caisse_exploit">
+                        <option value="Tous" selected>Choisir une caisse</option>
+                            {% for caisse in listAllCaisseExploit %}
+                                <option value="{{ caisse.id }}">{{ caisse.nomcaisse }} {{ caisse.numcaisse }}</option>
+                            {% endfor %}
+                    </select>
+                </div>
+
+
+                <div class="form-group">
+                    <label>Scenario :</label>
+                    <select id="scenario" name="scenario">
+                        <option value="Tous" selected>Choisir un scenario</option>
+                        {% for scenario in listAllScenario %}
+                            <option value="{{ scenario.id }}">{{ scenario.nomscenario }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Pool de VM :</label>
+                    <select id="pool" name="pool">
+                        <option value="Tous" selected>Choisir une pool</option>
+                        {% for poolvm in listAllPoolVM %}
+                            <option style="display: none;" value="{{ poolvm.id }}" class="pool-option" data-caisse="{{ poolvm.idcaisseexploit.id }}">{{ poolvm.nompool }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+
+                <!---  DIV MULTIPROCESS POUR LES SCENARIO  FESANT  PARTI DE PUMA NE SE MONTRARA QUE QUAND LE SCENARIO SERA SELECTIONNE -->
+                <div class= "multiprocess" style="display: none;">
+                    <div class="form-group">
+                        <label>Process :</label>
+                        {% for process in listAllProcess %}
+                        {% for scenario  in process.idscenario %}
+                            <div class="process-container" data-scenario="{{ scenario.id }}" style="display: none;">
+                                <input type="checkbox" class="process-checkbox" id="process_{{ process.id }}" name="process[]" value="{{ process.id }}" data-tempsminutedossier="{{ process.tempsminutedossier }}" data-vm-max="{{ process.vmmax }}">
+                                <label for="process_{{ process.id }}" title="Vm max : {{process.vmmax}}">{{ process.nomprocess }}</label>
+                                <div class="vm-container" data-process="{{ process.id }}" style="display: none;">  
+                                    <div class="form-group" id="allCheckboxesContainer" style="display: none;">
+                                        <input type="checkbox" class="allCheckboxes" id="allCheckboxes" name="all" value="all" style="display: none;">
+                                        <label for="allCheckboxes" class="unclickable-label" style="display: none;">Select All VM</label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>VM :</label>
+                                        {% for vm in listAllVM %}
+                                            <div class="vm-container" data-pool="{{ vm.poolvm.id }}" style="display: none;">
+                                                <input type="checkbox" class="vm-checkbox" id="vm_{{ vm.id }}" name="vm[]"  value="{{ vm.id }}">
+                                                <label for="vm_{{ vm.id }}" class="unclickable-label">{{ vm.nomvm }}</label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>   
+                            </div>
+                        {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div> 
+
+
+                <!---  DIV MONOPORCESS POUR LES SCENARIO NE FESANT PAS APRTI DE PUMA NE SE MONTRARA QUE QUAND LE SCENARIO SERA SELECTIONNE -->
+                <div class="monoprocess" style="display: none;">
+                    <div class="form-group" id="allCheckboxesContainer" style="display: none;">
+                        <input type="checkbox" class="allCheckboxes" id="allCheckboxes" name="all" value="all" style="display: none;">
+                        <label for="allCheckboxes" style="display: none;">Select All VM</label>
+                    </div>
+
+                    <div class="form-group" id="allCheckboxesContainer" >
+                        <label>VM :</label>
+                        {% for vm in listAllVM %}
+                            <div class="vm-container" data-pool="{{ vm.poolvm.id }}" style="display: none;">
+                                <input type="checkbox" class="vm-checkbox" id="vm_{{ vm.id }}" name="vm[]"  value="{{ vm.id }}">
+                                <label for="vm_{{ vm.id }}" class="unclickable-label">{{ vm.nomvm }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Process :</label>
+                        {% for process in listAllProcess %}
+                        {% for scenario  in process.idscenario %}
+                            <div class="process-container" data-scenario="{{ scenario.id }}" style="display: none;">
+                                <input type="checkbox" class="process-checkbox" id="process_{{ process.id }}" name="process[]" value="{{ process.id }}" data-tempsminutedossier ="{{ process.tempsminutedossier }}" >
+                                <label for="process_{{ process.id }}" class="unclickable-label">{{ process.nomprocess }}</label>
+                            </div>
+                        {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Nbre de dossiers :</label>
+                    <input type="number" min="0" max="100000" id="nbredossier" name="nbredossier">
+                </div>
+
+                <div class="form-group" id="tempsTraitementContainer" style="display: none;">
+                    <label>Temps du traitement (calculé) :</label>
+                    <span id="result"></span>
+                </div>
+
+
+                <div class="form-group">
+                    <label>Date de début :</label>
+                    <input type="datetime-local" id="datedebut" min="2018-01-01T00:00" max="2043-12-31T23:59" name="datedebut"></label>
+                </div>
+
+                <div class="form-group">
+                    <label>Date de fin :</label>
+                    <input type="datetime-local" id="datefin" min="2018-01-01T00:00" max="2043-12-31T23:59" name="datefin"></label>
+                </div>
+
+                <div class="form-group">
+                    <button id="saveButton" class="btn-save">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal draggable" id="editModal">
+        <div class="modal-content">
+            <span class="close" id="closeEdit">&times;</span>
+
+            <h2>Modifier le traitement</h2>
+
+            {% if traitement is defined %}
+            <form action="{{ path('traitement_edit', {'id': traitement.id}) }}" method="post" id="newTraitment_form">
+            {% endif %}
+
+                <div class="form-group">
+                    <label for="newCaisse">Caisse de traitement :</label>
+                    <select id="newCaisse" name="newCaisse">
+                        <option value="Tous" selected>Choisir une caisse</option>
+                        {% for caisse in listAllCaisse %}
+                            <option value="{{ caisse.id }}">{{ caisse.nomcaisse }} {{ caisse.numcaisse }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="newCaisse_exploit">Caisse exploitante :</label>
+                    <select id="newCaisse_exploit" name="newCaisse_exploit">
+                        <option value="Tous" selected>Choisir une caisse</option>
+                        {% for caisse in listAllCaisseExploit %}
+                            <option value="{{ caisse.id }}">{{ caisse.nomcaisse }} {{ caisse.numcaisse }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="newScenario">Scenario :</label>
+                    <select id="newScenario" name="newScenario">
+                        <option value="Tous" selected>Choisir un scenario</option>
+                        {% for scenario in listAllScenario %}
+                            <option value="{{ scenario.id }}">{{ scenario.nomscenario }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+               
+                <div class="form-group">
+                    <label for="newPool">Pool de VM :</label>
+                    <select id="newPool" name="newPool">
+                        <option value="Tous" selected>Choisir une pool</option>
+                        {% for poolvm in listAllPoolVM %}
+                            <option style="display: none;" value="{{ poolvm.id }}" class="pool-option" data-caisse="{{ poolvm.idcaisseexploit.id }}">{{ poolvm.nompool }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+
+
+                <!---  DIV MULTIPROCESS POUR LES SCENARIO  FESANT  PARTI DE PUMA NE SE MONTRARA QUE QUAND LE SCENARIO SERA SELECTIONNE -->
+                <div class= "multiprocess1" style="display: none;">
+                    <div class="form-group">
+                        <label>Process :</label>
+                        {% for process in listAllProcess %}
+                        {% for scenario  in process.idscenario %}
+                            <div class="process-container1" data-scenario="{{ scenario.id }}" style="display: none;">
+                                <input type="checkbox" class="process-checkbox1" id="newProcess_{{ process.id }}" name="newProcess_[]" value="{{ process.id }}" data-temps-minute-dossier="{{ process.tempsminutedossier }}" data-vm-max = "{{ process.vmmax }}">
+                                <label for="newProcess_{{ process.id }}"  title="Vm max : {{process.vmmax}}">{{ process.nomprocess }}</label>
+                                <div class="vm-container1" data-process="{{ process.id }}" style="display: none;">  
+                                    <div class="form-group" id="allCheckboxesContainer1" style="display: none;">
+                                        <input type="checkbox" class="allCheckboxes1" id="allCheckboxes" name="all" value="all"style="display: none;">
+                                        <label for="allCheckboxes1" class="unclickable-label" style="display: none;">Select All VM</label>
+                                    </div>
+                                    <div class="form-group" >
+                                        <label>VM :</label>
+                                        {% for vm in listAllVM %}
+                                            <div class="vm-container1" data-pool="{{ vm.poolvm.id }}" style="display: none;">
+                                                <input type="checkbox" class="vm-checkbox1" id="newVm_{{ vm.id }}" name="newVm_[]"  value="{{ vm.id }}">
+                                                <label for="newVm_{{ vm.id }}" class="unclickable-label">{{ vm.nomvm }}</label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>   
+                            </div>
+                        {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+
+                 <!---  DIV MONOPORCESS POUR LES SCENARIO NE FESANT PAS APRTI DE PUMA NE SE MONTRARA QUE QUAND LE SCENARIO SERA SELECTIONNE -->
+                <div class="monoprocess1" style="display: none;">
+
+                    <div class="form-group">
+                        <label>VM :</label>
+                        {% for vm in listAllVM %}
+                            <div class="vm-container1" data-pool="{{ vm.poolvm.id }}" style="display: none;">
+                                <input type="checkbox" class="vm-checkbox1" id="vm_{{ vm.id }}" name="vm[]"  value="{{ vm.id }}">
+                                <label for="vm_{{ vm.id }}" class="unclickable-label">{{ vm.nomvm }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Process :</label>
+                        {% for process in listAllProcess %}
+                        {% for scenario  in process.idscenario %}
+                            <div class="process-container1" data-scenario="{{ scenario.id }}" style="display: none;">
+                                <input type="checkbox" class="process-checkbox1" id="process_{{ process.id }}" name="process[]" value="{{ process.id }}" data-tempsminutedossier ="{{ process.tempsminutedossier }}" >
+                                <label for="process_{{ process.id }}" class="unclickable-label">{{ process.nomprocess }}</label>
+                            </div>
+                        {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="newNbredossier">Nbre de dossiers :</label>
+                    <input type="number" min="0" max="100000" id="newNbredossier" name="newNbredossier">
+                </div>
+
+
+                <div class="form-group" id="newTempsTraitementContainer" >
+                    <label>Temps du traitement (calculé) :</label>
+                    <span id="newResult"></span>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="newDatedebut">Date de début :</label>
+                    <input type="datetime-local" id="newDatedebut" min="2018-01-01T00:00" max="2043-12-31T23:59" name="newDatedebut"></label>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="newDatefin">Date de fin :</label>
+                    <input type="datetime-local" id="newDatefin" min="2018-01-01T00:00" max="2043-12-31T23:59" name="newDatefin"></label>
+                </div>
+
+
+                <div class="form-group">
+                    <button id="newEditButton" class="btn-save">Modifier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div class="modal draggable" id="errorModal">
+        <div class="modal-content">
+            <span class="close" id="closeError">&times;</span>
+            <h2>Ajouter un commentaire d'erreur</h2>
+                <div class="form-group">
+                    <textarea id="commentaireError" name="commentaire" style="resize:none;" rows="5" cols="33"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <button id="validError" class="btn-save">Valider</button>
+                    <button id="deleteError" class="btn-save">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal draggable" id="clotureModal">
+        <div class="modal-content">
+            <span class="close" id="closeCloture">&times;</span>
+            <h2>Ajouter un commentaire de clôture</h2>
+                <div class="form-group">
+                    <textarea id="commentaireCloture" name="commentaire" style="resize:none;" rows="5" cols="33"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <button id="validCloture" class="btn-save">Valider</button>
+                    <button id="deleteCloture" class="btn-save">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+
+    <div class="modal draggable" id="generalModal">
+        <div class="modal-content">
+        <span class="close" id="closeGeneral">&times;</span>
+            <div id="title"></div>
+            <div class="form-group">
+                <button id="editButton" class="btn-save">Modifier</button>
+                <button id="errorButton" class="btn-save">Erreur</button>
+            </div>
+            <div class="form-group">
+                <button id="deleteButton" class="btn-save">Supprimer</button>
+                <button id="closeButton" class="btn-save">Clôturer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal draggable" id="listModal">
+        <div id="modalContent">
+            <button id="yearButton">Année</button>
+            <button id="monthButton">Mois</button>
+            <button id="weekButton">Semaine</button>
+            <button id="dayButton">Jour</button>
+        </div>
+    </div>
+{% endblock %}

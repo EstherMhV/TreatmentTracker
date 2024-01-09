@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ajouter un process{% endblock %}
+
+{% block body %}
+    {% for flashError in app.flashes('error') %}
+        <div id="errorFlash" class="alert alert-danger mx-auto" style="width: 50%;">
+            {{ flashError }}
+        </div>
+        <script>
+            setTimeout(function() {
+                document.getElementById('errorFlash').style.display = 'none';
+            }, 2000); // (2 secondes)
+        </script>
+    {% endfor %}
+
+    <button class="returnToSettingButton button">
+        <a style="color:#fff" href="{{ path('setting') }}">Retour</a>
+    </button>
+
+    <div class="container">
+        <section class="row justify-content-center">
+            <div class="col-md-6 text-center col-form-label"> 
+
+                <h2>Créer un process</h2>
+
+                {{ form_start(form, {'attr': {'class': 'd-inline-block mt-4 col-form-label'}}) }}
+                    {{ form_widget(form) }}
+                    <button type="submit" class="button" onclick="return confirmCreate();">Créer</button>
+                {{ form_end(form) }}
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function confirmCreate() {
+            return confirm("Êtes-vous sûr de vouloir créer ce process ?");
+        }
+    </script>
+{% endblock %}

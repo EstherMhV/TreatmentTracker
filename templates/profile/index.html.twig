@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}PLADAPATH - Profil{% endblock %}
+
+{% block body %}
+    {% block javascripts %}
+        {# {{ encore_entry_script_tags('app') }} #}
+        <script src="{{ asset('js/jquery-3.6.0.min.js') }}"></script>
+    {% endblock %}
+
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-center" style="color:black">Votre profil</h2>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Idenfiant :</dt>
+                    <dd class="col-sm-9">{{ identifiant }}</dd>
+
+                    <dt class="col-sm-3">Nom :</dt>
+                    <dd class="col-sm-9">{{ nom_agent }}</dd>
+
+                    <dt class="col-sm-3">Prénom :</dt>
+                    <dd class="col-sm-9">{{ prenom_agent }}</dd>
+
+                    <dt class="col-sm-3">Numéro d'agent :</dt>
+                    <dd class="col-sm-9">{{ num_agent }}</dd>
+
+                    <dt class="col-sm-3">Rôle :</dt>
+                    <dd class="col-sm-9">{{ role }}</dd>
+
+                    <dt class="col-sm-3">Caisse :</dt>
+                    <dd class="col-sm-9">{{ codeOrganisme }}</dd>
+
+                    <dt class="col-sm-3">Nombre(s) de message(s) en cours :</dt>
+                    <dd class="col-sm-9">{{ totalMessagesByUser }}</dd>
+
+                    <dt class="col-sm-3" id="historiqueMessage">Historique :</dt>
+                    <dd class="col-sm-9" id="historiqueMessage1">
+                        <button class="btn btn-link" id="toggleMessages">Voir</button>
+                        <div id="messagesContainer" class="scroll" style="display: none;">
+                            {% if messagesByUser|length == 0 %}
+                                <script>
+                                    $(document).ready(function () {
+                                        $("#historiqueMessage").hide();
+                                        $("#historiqueMessage1").hide();
+                                    });
+                                </script>
+                            {% else %}
+                                {% for message in messagesByUser %}
+                                    <p>"{{ message.getContenu() }}" posté le {{ message.getDate()|date('d-m-Y à H:i:s') }}</p>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </dd>
+                    
+                    <dt class="col-sm-3">Nombre(s) de traitement(s) en cours :</dt>
+                    <dd class="col-sm-9">{{ totalTraitementsByAuteur }}</dd>
+
+                    <dt class="col-sm-3" id="historiqueTraitement">Historique :</dt>
+                    <dd class="col-sm-9" id="historiqueTraitement1">
+                        <button class="btn btn-link" id="toggleTraitements">Voir</button>
+                        <div id="traitementsContainer" class="scroll" style="display: none;">
+                            {% if traitementsByAuteur|length == 0 %}
+                                <script>
+                                    $(document).ready(function () {
+                                        $("#historiqueTraitement").hide();
+                                        $("#historiqueTraitement1").hide();
+                                    });
+                                </script>
+                            {% else %}
+                                {% for traitement in traitementsByAuteur %}
+                                    <p>Traitement n° {{ traitement.getId() }} créé le {{ traitement.getDateCreation()|date('d-m-Y à H:i:s') }}</p>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // Toggle messages visibility
+            $("#toggleMessages").click(function () {
+                $("#messagesContainer").toggle();
+            });
+
+            // Toggle traitements visibility
+            $("#toggleTraitements").click(function () {
+                $("#traitementsContainer").toggle();
+            });
+        });
+    </script>
+{% endblock %}
