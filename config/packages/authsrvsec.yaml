@@ -1,7 +1,0 @@
-auth_srv_sec:
-    system: SY_PLADAPATH
-    mapping_role:
-        CONSULT-PLADAPATH: ROLE_CONS
-        ADMIN-PLADAPATH: ROLE_ADMIN
-    mapping_default_role: ROLE_ADMIN
-    bouchon_redirect: app_accueil
